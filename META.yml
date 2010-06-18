@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Xymon-Server-History
-version:            0.01
+version:            0.03
 abstract:           Return a hash of Xymon events history
 author:
     - David Peters (davidp@electronf.com)
@@ -11,9 +11,11 @@ configure_requires:
 build_requires:
     ExtUtils::MakeMaker:  0
 requires:
-    File::Find:     0.01
-    Test::Simple:   0.44
-    Xymon::Server:  0.01
+    Business::Hours:  0.01
+    File::Find:       0.01
+    Test::Simple:     0.44
+    Time::Local:      0.01
+    Xymon::Server:    0.01
 no_index:
     directory:
         - t

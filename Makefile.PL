@@ -12,5 +12,7 @@ WriteMakefile(
                      'Test::Simple' => 0.44,
                      'Xymon::Server' => 0.01,
                      'File::Find' => 0.01,
+                     'Time::Local' => 0.01,
+                     'Business::Hours' => 0.01,
                     },
 );
