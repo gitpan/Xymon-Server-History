@@ -13,6 +13,6 @@ WriteMakefile(
                      'Xymon::Server' => 0.01,
                      'File::Find' => 0.01,
                      'Time::Local' => 0.01,
-                     'Business::Hours' => 0.01,
+                     'Time::Business' => 0.04,
                     },
 );

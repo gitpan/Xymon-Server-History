@@ -4,13 +4,14 @@ use Xymon::Server;
 use File::Find;
 use Time::Local;
 use Data::Dumper;
+use Time::Business;
 
 use strict;
 
 BEGIN {
     use Exporter ();
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday);
-    $VERSION     = '0.03';
+    $VERSION     = '0.04';
     @ISA         = qw(Exporter);
     #Give a hoot don't pollute, do not export more than needed by default
     @EXPORT      = qw();
@@ -110,7 +111,7 @@ sub allEvents {
 		
 			 
 	},$self->{datadir} . "/histlogs/" ); 
-	
+	print "Loaded " . scalar (localtime) . "\n";
 	return $self->{history};
 }
 
@@ -211,7 +212,7 @@ sub outagelist {
 			}
 		}
 	} 
-	
+	print scalar (localtime) . " : Finished\n";
 	return $self->{outages};
 	
 }
@@ -284,6 +285,11 @@ and an array of tests in order to filter the results eg:
 The filename of the event is in the format:	Fri_Dec_14_16:56:14_2007
 
 =head2 outagelist({...}) 
+	
+	outagelist({
+		SERVERS => ["servername1","servername2"],
+		TESTS => ["conn","uptime"]
+	})
 
 Returns a list of outages from red to non-red in the following format
 
