@@ -10,8 +10,8 @@ use strict;
 
 BEGIN {
     use Exporter ();
-    use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday);
-    $VERSION     = '0.04';
+    use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
+    $VERSION     = '0.05';
     @ISA         = qw(Exporter);
     #Give a hoot don't pollute, do not export more than needed by default
     @EXPORT      = qw();
@@ -27,12 +27,18 @@ sub new
 
 	my $xymon = Xymon::Server->new({HOME=>$param->{HOME}});
 	
+	my $bustime = Time::Business->new({
+		WORKDAYS=>$param->{WORKDAYS},
+		STARTTIME=>$param->{STARTTIME},
+		ENDTIME=>$param->{ENDTIME},
+	});
+	
 	$self->{datadir} = $xymon->{BBVAR};	
 	$month={Jan=>0,Feb=>1,Mar=>2,Apr=>3,May=>4,Jun=>5,Jul=>6,Aug=>7,Sep=>8,Oct=>9,Nov=>10,Dec=>11};
 	$week = {Sun=>0,Mon=>1,Tue=>2,Wed=>3,Thu=>4,Fri=>5,Sat=>6};
 	$weekday = {0=>'Sun',1=>'Mon',2=>'Tue',3=>'Wed',4=>'Thu',5=>'Fri',6=>'Sat'};
 	$self->allEvents($param);
-	
+		
     return $self;
 }
 
@@ -124,26 +130,6 @@ sub outagelist {
 	
 				
 	
-	#$hours->business_hours(%business_hours);
-	
-	if(defined $param->{STARTTIME} && defined $param->{ENDTIME} && defined $param->{DAYS}) {
-		
-#		foreach my $day (@{$param->{DAYS}}) {
-#			print $day . "\n";
-#			$business_hours->{$day} = ({
-#					Name => $weekday->{$day},
-#					Start => $param->{STARTTIME},
-#					End => $param->{ENDTIME}
-#				
-#				});
-#			
-#		}
-#		$hours->business_hours($business_hours); 
-		
-	}
-	
-	
-	#print time() . "--->" . $hours->between(time(),time()+86400) . "-----------\n";
 	$self->{outages}={};	
 		
 	
@@ -194,6 +180,7 @@ sub outagelist {
 						endtime => $ref->{$file}->{time},
 						end24hour => $end24,
 						duration => $ref->{$file}->{time} - $evtref->{time},
+						business => $bustime->calctime($evtref->{time},$ref->{$file}->{time}),
 						filename => $ref->{$file}->{filename}
 					};
 					if(defined $param->{STARTTIME}) {
