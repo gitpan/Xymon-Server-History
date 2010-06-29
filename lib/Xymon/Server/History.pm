@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.13';
+	$VERSION = '0.14';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -36,8 +36,8 @@ sub new {
 	);
 	
 	$self->{RANGESTART} = $param->{RANGESTART} || 0;
-	$self->{RANGEEND} = $param->{RANGEEND} || 999999999;
-
+	$self->{RANGEEND} = $param->{RANGEEND} || 9999999999;
+											  
 	$self->{datadir} = $xymon->{BBVAR};
 	$month = {
 		Jan => 0,
