@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.10';
+	$VERSION = '0.11';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -71,7 +71,7 @@ sub allEvents {
 	my $self  = shift;
 	my $param = shift;
 
-	my @servers = @{ $param->{SERVERS} || [] };
+	my @srvarray = @{ $param->{SERVERS} || [] };
 	my @tests   = @{ $param->{TESTS}   || [] };
 
 	my $count = 0;
@@ -80,8 +80,8 @@ sub allEvents {
 	# setup hash of servers for faster find comparison
 	#
 	my $servers = {};
-	if ( @servers > 0 ) {
-		foreach my $server (@servers) {
+	if ( @srvarray > 0 ) {
+		foreach my $server (@srvarray) {
 			$servers->{$server} = 1;
 		}
 	}
@@ -113,7 +113,7 @@ sub allEvents {
 				my $test     = $words[ $depth + 1 ];
 				my $filename = $words[ $depth + 2 ];
 
-				if ( $servers->{$server} == 1 || @servers == 0 ) {
+				if ( $servers->{$server} == 1 || @srvarray == 0 ) {
 					if ( $tests->{$test} == 1 || @tests == 0 ) {
 
 						$self->{history}->{$server}->{$test}->{$filename}
