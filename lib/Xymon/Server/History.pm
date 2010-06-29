@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.14';
+	$VERSION = '0.15';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -206,8 +206,7 @@ sub outagelist {
 					) = localtime( $ref->{$file}->{time} );
 					my $end24 = $hour * 100 + $min;
 
-					
-					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEND}) {
+					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
 											
 						my $bussecs =
 						  $bustime->duration( $evtref->{time},
