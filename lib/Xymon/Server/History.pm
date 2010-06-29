@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.12';
+	$VERSION = '0.13';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -34,6 +34,9 @@ sub new {
 			ENDTIME   => $param->{ENDTIME},
 		}
 	);
+	
+	$self->{RANGESTART} = $param->{RANGESTART} || 0;
+	$self->{RANGEEND} = $param->{RANGEEND} || 999999999;
 
 	$self->{datadir} = $xymon->{BBVAR};
 	$month = {
@@ -203,23 +206,27 @@ sub outagelist {
 					) = localtime( $ref->{$file}->{time} );
 					my $end24 = $hour * 100 + $min;
 
-					my $bussecs =
-					  $bustime->duration( $evtref->{time},
-						$ref->{$file}->{time} );
-
-					$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
-						
-						server    => $hostname,
-						test      => $test,
-						starttime => $evtref->{time},
-						endtime   => $ref->{$file}->{time},
-						duration  => $ref->{$file}->{time} - $evtref->{time},
-						bussecs   => $bussecs,
-						busstring => $bustime->workTimeString($bussecs),
-						filename  => $ref->{$file}->{filename}
-
-					};
-
+					
+					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEND}) {
+											
+						my $bussecs =
+						  $bustime->duration( $evtref->{time},
+							$ref->{$file}->{time} );
+											
+						$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
+							
+							server    => $hostname,
+							test      => $test,
+							starttime => $evtref->{time},
+							endtime   => $ref->{$file}->{time},
+							duration  => $ref->{$file}->{time} - $evtref->{time},
+							bussecs   => $bussecs,
+							busstring => $bustime->workTimeString($bussecs),
+							filename  => $ref->{$file}->{filename}
+	
+						};
+					}
+					
 					$startcolor = "";
 					$endcolor   = "";
 				}
@@ -269,7 +276,9 @@ my $history = Xymon::Server::History->new({
 		TESTS=>['conn'],
 		STARTTIME=>"9:00",
 		ENDTIME=>"17:00",
-		WORKDAYS=>[1,2,3,4,5]
+		WORKDAYS=>[1,2,3,4,5],
+		RANGESTART=>time()-86400*7,
+		RANGEEND=>time(),
 });
 
 =head2 allEvents({....})
