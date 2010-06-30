@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Xymon-Server-History
-version:            0.15
+version:            0.16
 abstract:           Return a hash of Xymon events history
 author:
     - David Peters (davidp@electronf.com)

@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.15';
+	$VERSION = '0.16';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -37,6 +37,7 @@ sub new {
 	
 	$self->{RANGESTART} = $param->{RANGESTART} || 0;
 	$self->{RANGEEND} = $param->{RANGEEND} || 9999999999;
+	$self->{MINSECS} = $param->{MINSECS} || 0;
 											  
 	$self->{datadir} = $xymon->{BBVAR};
 	$month = {
@@ -207,29 +208,31 @@ sub outagelist {
 					my $end24 = $hour * 100 + $min;
 
 					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
-											
-						my $bussecs =
-						  $bustime->duration( $evtref->{time},
-							$ref->{$file}->{time} );
-											
-						$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
-							
-							server    => $hostname,
-							test      => $test,
-							starttime => $evtref->{time},
-							endtime   => $ref->{$file}->{time},
-							duration  => $ref->{$file}->{time} - $evtref->{time},
-							bussecs   => $bussecs,
-							busstring => $bustime->workTimeString($bussecs),
-							filename  => $ref->{$file}->{filename}
-	
-						};
+													
+						# Calculate business time.
+						my $bussecs = $bustime->duration( $evtref->{time},$ref->{$file}->{time} );
+						
+						if( $bussecs >= $self->{MINSECS}) {	
+												
+							$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
+								
+								server    => $hostname,
+								test      => $test,
+								starttime => $evtref->{time},
+								endtime   => $ref->{$file}->{time},
+								duration  => $ref->{$file}->{time} - $evtref->{time},
+								bussecs   => $bussecs,
+								busstring => $bustime->workTimeString($bussecs),
+								filename  => $ref->{$file}->{filename}
+		
+							};
+						}
 					}
 					
 					$startcolor = "";
 					$endcolor   = "";
 				}
-
+				
 				close($evtfile);
 
 			}
@@ -271,13 +274,14 @@ You must pass it the HOME dir for hobbit. (One level below server).
 
 my $history = Xymon::Server::History->new({
 		HOME=>'/home/hobbit/server',
-		SERVERS=>['oranprodsys'], 
-		TESTS=>['conn'],
-		STARTTIME=>"9:00",
-		ENDTIME=>"17:00",
-		WORKDAYS=>[1,2,3,4,5],
-		RANGESTART=>time()-86400*7,
-		RANGEEND=>time(),
+		SERVERS => ['oranprodsys'], 
+		TESTS => ['conn'],
+		STARTTIME => "9:00",
+		ENDTIME => "17:00",
+		WORKDAYS => [1,2,3,4,5],
+		RANGESTART => time()-86400*7,
+		RANGEEND => time(),
+		MINSECS => 300
 });
 
 =head2 allEvents({....})
