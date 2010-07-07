@@ -6,7 +6,7 @@ use Test::More tests => 2;
 
 BEGIN { use_ok( 'Xymon::Server::History' ); }
 
-my $object = Xymon::Server::History->new ();
+my $object = Xymon::Server::History->new ({test=>1});
 isa_ok ($object, 'Xymon::Server::History');
 
 

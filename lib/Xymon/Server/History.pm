@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.18';
+	$VERSION = '0.19';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -24,7 +24,9 @@ BEGIN {
 sub new {
 	my ( $class, $param ) = @_;
 	my $self = bless( {}, ref($class) || $class );
-
+	
+	
+	
 	my $xymon = Xymon::Server->new( { HOME => $param->{HOME} } );
 
 	$bustime = Time::Business->new(
@@ -250,7 +252,6 @@ sub outagelist {
 			# Status is till red, add an outage that extends up until now
 			#
 			if( $endtestcolor eq "red" && $evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
-				print "$hostname - " . $endtestcolor . "\n";	
 				$ref->{$file}->{time} = time();
 				add_outage($self,$hostname,$test,$evtref,$ref,$file,"Still Down");
 			}
@@ -392,7 +393,8 @@ Returns a list of outages from red to non-red in the following format
 	        'duration' => 1435,
 	        'endtime' => 1265338565,
 	        'server' => 'server1',
-	        'bussecs' => 1435
+	        'bussecs' => 1435,
+	        'comment' => 'Still Down'
 	
 	               },
                                      
