@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.16';
+	$VERSION = '0.18';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -38,7 +38,7 @@ sub new {
 	$self->{RANGESTART} = $param->{RANGESTART} || 0;
 	$self->{RANGEEND} = $param->{RANGEEND} || 9999999999;
 	$self->{MINSECS} = $param->{MINSECS} || 0;
-											  
+												  
 	$self->{datadir} = $xymon->{BBVAR};
 	$month = {
 		Jan => 0,
@@ -102,24 +102,26 @@ sub allEvents {
 
 	my @dirdepth = split /\//, "$self->{datadir}/histlogs";
 	my $depth = @dirdepth;
-
+	
 	find(
 		sub {
 
 			my $t = $File::Find::name;
-
+			
+			
 			my @words = split /\//, $t;
 			my $length = @words;
 
 			if ( $length > $depth + 2 ) {
-
+			
 				my $server   = $words[$depth];
 				my $test     = $words[ $depth + 1 ];
 				my $filename = $words[ $depth + 2 ];
 				
 				if ( $servers->{$server} == 1 || @srvarray == 0 ) {
-					if ( $tests->{$test} == 1 || @tests == 0 ) {
 
+					if ( $tests->{$test} == 1 || @tests == 0 ) {
+						
 						$self->{history}->{$server}->{$test}->{$filename}
 						  ->{filename} =
 						    $self->{datadir}
@@ -168,15 +170,17 @@ sub outagelist {
 		$hist_hashref = $self->allEvents($param);
 	}
 
-	foreach my $hostname ( keys %{$hist_hashref} ) {
-		foreach my $test ( keys %{ $hist_hashref->{$hostname} } ) {
-			my $ref = $hist_hashref->{$hostname}->{$test};
+	my ($hostname,$test,$evtref,$ref,$file);
+	foreach $hostname ( keys %{$hist_hashref} ) {
+		my $endtestcolor;
+		
+		foreach $test ( keys %{ $hist_hashref->{$hostname} } ) {
+			$ref = $hist_hashref->{$hostname}->{$test};
 
 			my $startcolor;
 			my $endcolor;
-			my $evtref = {};
-			foreach
-			  my $file ( sort { $ref->{$a}->{time} <=> $ref->{$b}->{time} }
+			$evtref = {};
+			foreach $file ( sort { $ref->{$a}->{time} <=> $ref->{$b}->{time} }
 				keys %{$ref} )
 			{
 
@@ -185,6 +189,7 @@ sub outagelist {
 				chomp $eventline;
 
 				my $color = ( split / /, $eventline )[0];
+				$endtestcolor = $color;
 				if ( $color eq "red" && $startcolor ne "red" ) {
 					$startcolor = "red";
 
@@ -208,40 +213,88 @@ sub outagelist {
 					my $end24 = $hour * 100 + $min;
 
 					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
-													
-						# Calculate business time.
-						my $bussecs = $bustime->duration( $evtref->{time},$ref->{$file}->{time} );
 						
-						if( $bussecs >= $self->{MINSECS}) {	
-												
-							$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
+						
+						add_outage($self,$hostname,$test,$evtref,$ref,$file);							
+						# Calculate business time.
+						
+						#my $bussecs = $bustime->duration( $evtref->{time},$ref->{$file}->{time} );
+						
+						
+																	
+						#	$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
 								
-								server    => $hostname,
-								test      => $test,
-								starttime => $evtref->{time},
-								endtime   => $ref->{$file}->{time},
-								duration  => $ref->{$file}->{time} - $evtref->{time},
-								bussecs   => $bussecs,
-								busstring => $bustime->workTimeString($bussecs),
-								filename  => $ref->{$file}->{filename}
+						#		server    => $hostname,
+						#		test      => $test,
+						#		starttime => $evtref->{time},
+						#		endtime   => $ref->{$file}->{time},
+						#		duration  => $ref->{$file}->{time} - $evtref->{time},
+						#		bussecs   => $bussecs,
+						#		busstring => $bustime->workTimeString($bussecs),
+						#		filename  => $ref->{$file}->{filename}
 		
-							};
-						}
+						#	};
+						
 					}
 					
 					$startcolor = "";
 					$endcolor   = "";
 				}
+
 				
 				close($evtfile);
 
 			}
+			
+			#
+			# Status is till red, add an outage that extends up until now
+			#
+			if( $endtestcolor eq "red" && $evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
+				print "$hostname - " . $endtestcolor . "\n";	
+				$ref->{$file}->{time} = time();
+				add_outage($self,$hostname,$test,$evtref,$ref,$file,"Still Down");
+			}
+		
+		
 		}
 	}
 	
 	
 	return $self->{outages};
 
+}
+
+#
+# add an outage to the hashref
+#
+sub add_outage {
+	
+	my $self=shift;
+	my $hostname = shift;
+	my $test = shift;
+	my $evtref=shift;
+	my $ref=shift;
+	my $file=shift;
+	my $comment = shift;
+	
+	
+	
+	my $bussecs = $bustime->duration( $evtref->{time},$ref->{$file}->{time} );
+	
+	$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
+								
+			server    => $hostname,
+			test      => $test,
+			starttime => $evtref->{time},
+			endtime   => $ref->{$file}->{time},
+			duration  => $ref->{$file}->{time} - $evtref->{time},
+			bussecs   => $bussecs,
+			busstring => $bustime->workTimeString($bussecs),
+			filename  => $ref->{$file}->{filename},
+			comment	  => $comment
+		
+};
+	
 }
 
 =head1 NAME
@@ -332,6 +385,7 @@ Returns a list of outages from red to non-red in the following format
 	'oranprodsys.conn.1265337130' => {
    
  	       'test' => 'conn',
+ 	       'server' => 'hostname',
 	        'filename' => '/home/hobbit/data/histlogs/server1/conn/Fri_Feb_5_13:56:05_2010',
 	        'starttime' => 1265337130,
 	        'busstring' => '0 days 0 hours 23 minutes',
