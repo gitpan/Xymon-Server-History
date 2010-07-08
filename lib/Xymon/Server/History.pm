@@ -12,7 +12,7 @@ BEGIN {
 	use Exporter ();
 	use vars
 	  qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $month $week $weekday $bustime);
-	$VERSION = '0.19';
+	$VERSION = '0.20';
 	@ISA     = qw(Exporter);
 
 	#Give a hoot don't pollute, do not export more than needed by default
@@ -182,16 +182,17 @@ sub outagelist {
 			my $startcolor;
 			my $endcolor;
 			$evtref = {};
-			foreach $file ( sort { $ref->{$a}->{time} <=> $ref->{$b}->{time} }
-				keys %{$ref} )
+			foreach $file ( sort { $ref->{$a}->{time} <=> $ref->{$b}->{time} } keys %{$ref} )
 			{
-
 				open( my $evtfile, "<", $ref->{$file}->{filename} );
 				my $eventline = <$evtfile>;
 				chomp $eventline;
 
 				my $color = ( split / /, $eventline )[0];
 				$endtestcolor = $color;
+				if( $test eq "conn" && $hostname eq "oranprodbsirt1" ) {
+					print "$ref->{$file}->{time} $hostname $color \n";
+				}
 				if ( $color eq "red" && $startcolor ne "red" ) {
 					$startcolor = "red";
 
@@ -213,30 +214,11 @@ sub outagelist {
 						$year, $wday, $yday, $isdst
 					) = localtime( $ref->{$file}->{time} );
 					my $end24 = $hour * 100 + $min;
-
+					
 					if($evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
-						
-						
+
 						add_outage($self,$hostname,$test,$evtref,$ref,$file);							
-						# Calculate business time.
-						
-						#my $bussecs = $bustime->duration( $evtref->{time},$ref->{$file}->{time} );
-						
-						
-																	
-						#	$self->{outages}->{ "$hostname.$test.$evtref->{time}" } = {
-								
-						#		server    => $hostname,
-						#		test      => $test,
-						#		starttime => $evtref->{time},
-						#		endtime   => $ref->{$file}->{time},
-						#		duration  => $ref->{$file}->{time} - $evtref->{time},
-						#		bussecs   => $bussecs,
-						#		busstring => $bustime->workTimeString($bussecs),
-						#		filename  => $ref->{$file}->{filename}
-		
-						#	};
-						
+
 					}
 					
 					$startcolor = "";
@@ -249,11 +231,13 @@ sub outagelist {
 			}
 			
 			#
-			# Status is till red, add an outage that extends up until now
+			# Status is still red, add an outage that extends up until now
 			#
-			if( $endtestcolor eq "red" && $evtref->{time} >= $self->{RANGESTART} && $evtref->{time} <= $self->{RANGEEND}) {
+			
+			if( $endtestcolor eq "red" ) {
 				$ref->{$file}->{time} = time();
 				add_outage($self,$hostname,$test,$evtref,$ref,$file,"Still Down");
+				
 			}
 		
 		
